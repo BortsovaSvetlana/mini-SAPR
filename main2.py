@@ -117,6 +117,7 @@ class GraphicScene(QGraphicsScene) :
                 self.parent.paintPoint(len(self.parent.Points) - 1)
                 self.update()
             elif (self.parent.option == "delete") :# если кнопка delete
+                # Не удалять точки, которые были выбраны вторыми
                 X = event.scenePos()
 
                 Tr = QTransform()
@@ -135,33 +136,140 @@ class GraphicScene(QGraphicsScene) :
                         break
 
                 if self.parent.lines.count(item)>0 :#если найденный объект - линия.
-                    print("find item")
-                    idx = self.parent.lines.index(item)
+                    print("find item_line")
+                    #idx = self.parent.lines.index(item)
                    # elem = self.parent.lines_idxs[idx]
                    # self.parent.lines_idxs.remove(elem)
                     line = item.line()
+                    if len(self.parent.Restriction) > 0:
+                        for i in range(len(self.parent.pointsFlatten)):
+                            if line.x1() == self.parent.pointsFlatten[i]:
+                                ind_x1 = i
+                            elif line.y1() == self.parent.pointsFlatten[i]:
+                                ind_y1 = i
+                            elif line.x2() == self.parent.pointsFlatten[i]:
+                                ind_x2 = i
+                            elif line.y2() == self.parent.pointsFlatten[i]:
+                                ind_y2 = i
+                        i = 0
+                        while True:
+                            flag = 0
+                            for j in range(len(self.parent.Restriction[i])):
+                                if self.parent.Restriction[i][j] != 0 and j == ind_x1:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
 
-
-
-                    self.parent.Points.remove([line.x1(),line.y1()])#удаляем точки из общего массива
-
+                                elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
+                                elif self.parent.Restriction[i][j] != 0 and j == ind_x2:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
+                                elif self.parent.Restriction[i][j] != 0 and j == ind_y2:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
+                            if flag == 0:
+                                self.parent.Restriction[i].pop(ind_y2)
+                                self.parent.Restriction[i].pop(ind_x2)
+                                self.parent.Restriction[i].pop(ind_y1)
+                                self.parent.Restriction[i].pop(ind_x1)
+                            if flag == 0:
+                                i = i + 1
+                            if (i != len(self.parent.Restriction) and flag == 1):
+                                print("EDDD")
+                                if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    print("remove ", self.parent.Restriction[i+1], " and ",
+                                          self.parent.RestrictionRightVector[i+1])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                            print(self.parent.Restriction)
+                            print(self.parent.RestrictionRightVector)
+                            if i >= len(self.parent.Restriction):
+                                break
+                    self.parent.Points.remove([line.x1(),line.y1()])  # удаляем точки из общего массива
                     self.parent.Points.remove([line.x2(), line.y2()])
                     self.parent.scene.removeItem(item)# удаляем со сцены
                     self.parent.lines.remove(item)#удаляем из массива линий
 
-
-                if(self.parent.scPoints.count(item)) :#если точка
-                    print("find item")
-                    idx = self.parent.scPoints.index(item)
-                  #  elem = self.parent.scPoints_idxs[idx]
+                elif self.parent.scPoints.count(item):#если точка
+                    print("find item_point")
                     x1,y1,x2,y2 = item.rect().getRect()
+                    if len(self.parent.Restriction) > 0:
+                        for i in range(len(self.parent.pointsFlatten)):
+                            if x1 == self.parent.pointsFlatten[i]:
+                                ind_x1 = i
+                            elif y1 == self.parent.pointsFlatten[i]:
+                                ind_y1 = i
+                        i = 0; df = 0
+                        while True:
+                            flag = 0
+                            for j in range(len(self.parent.Restriction[i])):
+                                if self.parent.Restriction[i][j] != 0 and j == ind_x1:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
 
-
+                                elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
+                                    flag = 1
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    break
+                            if flag == 0:
+                                self.parent.Restriction[i].pop(ind_y1)
+                                self.parent.Restriction[i].pop(ind_x1)
+                            if flag == 0:
+                                i = i+1
+                            #print(self.parent.Restriction)
+                            #print(self.parent.RestrictionRightVector)
+                            if (i != len(self.parent.Restriction) and flag == 1):
+                                print("EDDD")
+                                if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
+                                    print("remove ", self.parent.Restriction[i], " and ",
+                                          self.parent.RestrictionRightVector[i])
+                                    print("remove ", self.parent.Restriction[i+1], " and ",
+                                          self.parent.RestrictionRightVector[i+1])
+                                    df = 1
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                    self.parent.Restriction.pop(i)
+                                    self.parent.RestrictionRightVector.pop(i)
+                                else:
+                                    df = 0
+                            if i >= len(self.parent.Restriction):
+                                break
+                        print(self.parent.Restriction)
+                        print(self.parent.RestrictionRightVector)
                  #   self.parent.scPoints_idxs.remove(elem)
                     self.parent.Points.remove([x1,y1])
                     self.parent.scene.removeItem(item)
                     self.parent.scPoints.remove(item)
                 self.update()
+
             elif(self.parent.option == "coords")  :# если кнопка задания координат
                 X = event.scenePos()
 
@@ -194,7 +302,7 @@ class GraphicScene(QGraphicsScene) :
                                                         transform)  # поиск элемента на сцене
                         if item is not None:  # если найден - прерываем цикл
                             if self.parent.lines.count(item) > 0:  # говнокод, чтобы находил точки из линии выбранную
-                                for k in range(-5,5):
+                                for k in range(-5, 5):
                                     for m in range(-5, 5):
                                         if item.line().x1() == coord.x() + k and item.line().y1() == coord.y() + m:
                                             cur_value.append(coord.x() + k)
@@ -493,11 +601,6 @@ class App(QMainWindow):
 
 
     def repaintByPoint(self,item):# меняет координаты точки с номером self.incr и перерисовывает соответствующий ей объект( динию или точку сцены)
-
-
-
-
-
         if self.lines.count(item) > 0:  # аналогично уладению и созданию. сначала удаляем, потом создаем новую
             print("find item")
             idx = self.lines.index(item)
@@ -509,12 +612,25 @@ class App(QMainWindow):
             self.incr = -1
             self.showDialogEnterPoint()  # задание х
             x = self.d
+            '''''
+            for i in range(len(self.pointsFlatten)):
+                for j in range(len(self.pointsFlatten)):
+                    if self.Restriction[i][j] == 1 and j == incr*2 and self.RestrictionRightVector[j] != 0:  # Для х координаты, которая меняется
+                        self.RestrictionRightVector[j] = x
+            '''''
             self.showDialogEnterPoint()  # задание y
             y = self.d
+            '''''
+            for i in range(len(self.pointsFlatten)):
+                for j in range(len(self.pointsFlatten)):
+                    if self.Restriction[i][j] == 1 and j == incr*2 + 1 and self.RestrictionRightVector[j] != 0:  # Для х координаты, которая меняется
+                        self.RestrictionRightVector[j] = y
+            '''''
             print(x)
             print(y)
+            print(self.Points)
             self.scene.removeItem(item)
-
+            print(self.Points)
             if (incr == 0):
                 self.Points.remove([line.x1(), line.y1()])
                 line.setP1(QPointF(x, y))
@@ -523,7 +639,8 @@ class App(QMainWindow):
                 self.Points.remove([line.x2(), line.y2()])
                 line.setP2(QPointF(x, y))
 
-            self.Points.append([x, y])
+            self.Points.insert([x, y], item)
+            print(self.Points)
 
             qline = QGraphicsLineItem(line)
             self.lines[idx] = qline
