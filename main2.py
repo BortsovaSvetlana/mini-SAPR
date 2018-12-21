@@ -2,14 +2,21 @@
 
 import sys, random
 import numpy as np
+import sympy as sp
 import random
 
 from mpu import datastructures
+from sympy import *
 from PyQt5.QtWidgets import *#QMainWindow, QFrame, QDesktopWidget, QApplication, QWidget, QGraphicsScene, QGraphicsSceneMouseEvent
 from PyQt5.QtCore import *#Qt, QBasicTimer, pyqtSignal, QPoint
 from PyQt5.QtGui import *#QPainter, QColor, QPen, QPolygon
 
-
+x0, x1, x2, x3, x4, x5, x6, x7, y0, y1, y2, y3, y4, y5, y6, y7 = sp.symbols('x0 x1 x2 x3 x4 x5 x6 x7 y0 y1 y2 y3 y4 y5 y6 y7')
+la0, la1, la2, la3, la4, la5, la6, la7, la8 = sp.symbols('la0 la1 la2 la3 la4 la5 la6 la7 la8')
+name = "x"
+name_la = "la"
+list_of_sym_coord = []
+list_of_la = []
 # todo найти и посмотреть transform для окна
 
 
@@ -108,10 +115,22 @@ class GraphicScene(QGraphicsScene) :
                     self.parent.Restriction[i].append(0)
                 self.update()
 
-            elif(self.parent.option == "point") :# если кнопка point. создается новая точка
+            elif self.parent.option == "point" :# если кнопка point. создается новая точка
                 X = event.scenePos()
                 self.parent.Points.append([X.x(), X.y()])
-                for cur in range(len(self.parent.Restriction)):  #добавляем два раза в уравнения ограничений
+                #  Добавили в список из перечня символьных величин
+                list_of_sym_coord.append(globals()['x%s' % str(self.parent.glob_count)])
+                list_of_sym_coord.append(globals()['y%s' % str(self.parent.glob_count)])
+                print("Текущее состояние вектора символьных координат", list_of_sym_coord)
+                #  Теперь надо создать уравнение без ограничения
+                self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
+                self.parent.function_no_restriction = sp.Add(*list(map(lambda x, y: (0.5 * pow(x - y, 2)),
+                                                                       list_of_sym_coord, self.parent.pointsFlatten)))
+                print(self.parent.function_no_restriction)
+                #  Прибавляем глобальный счетчик для символьных значений
+                self.parent.glob_count = self.parent.glob_count+1
+
+                for cur in range(len(self.parent.Restriction)): #  добавляем два раза в уравнения ограничений
                     self.parent.Restriction[cur].append(0)
                     self.parent.Restriction[cur].append(0)
                 self.parent.paintPoint(len(self.parent.Points) - 1)
@@ -210,6 +229,7 @@ class GraphicScene(QGraphicsScene) :
                     self.parent.Points.remove([line.x2(), line.y2()])
                     self.parent.scene.removeItem(item)# удаляем со сцены
                     self.parent.lines.remove(item)#удаляем из массива линий
+                    self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
 
                 elif self.parent.scPoints.count(item):#если точка
                     print("find item_point")
@@ -264,10 +284,10 @@ class GraphicScene(QGraphicsScene) :
                                 break
                         print(self.parent.Restriction)
                         print(self.parent.RestrictionRightVector)
-                 #   self.parent.scPoints_idxs.remove(elem)
                     self.parent.Points.remove([x1,y1])
                     self.parent.scene.removeItem(item)
                     self.parent.scPoints.remove(item)
+                    self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
                 self.update()
 
             elif(self.parent.option == "coords")  :# если кнопка задания координат
@@ -329,7 +349,7 @@ class GraphicScene(QGraphicsScene) :
                         break
                 if self.parent.Points.count(cur_value):
                     if len(self.parent.chsTwoPoint) < 3:
-                        print("find item")
+                        #print("find item")
                         self.parent.chsTwoPoint.extend(cur_value)
                         print("ChsTwoP", self.parent.chsTwoPoint)
                     else:
@@ -426,9 +446,13 @@ class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.Points = []
+        self.function_no_restriction = []
+        self.function_with_restriction = []
         self.Restriction = []
         self.RestrictionRightVector = []
         self.setUi()
+        self.glob_count = 0
+        self.counter_la = 0
 
        # QtWidgets.QMainWindow.__init__(self, parent=parent)
        # self.setupUi(self)
@@ -555,37 +579,67 @@ class App(QMainWindow):
         for i in range(len(self.chsTwoPoint)):
             ind_point.append(self.pointsFlatten.index(self.chsTwoPoint[i]))
         self.chsTwoPoint.clear()
-        #print("PointsFlatten: \n", self.pointsFlatten)
-        cur_restriction1 = []
-        for i in range(len(self.pointsFlatten)):
-            cur_restriction1.append(0)
-        cur_restriction1[ind_point[0]] = -1
-        cur_restriction1[ind_point[2]] = 1
-        self.Restriction.append(cur_restriction1)
-        self.RestrictionRightVector.append(0)
-        cur_restriction2 = []
-        for i in range(len(self.pointsFlatten)):
-            cur_restriction2.append(0)
-        cur_restriction2[ind_point[1]] = -1
-        cur_restriction2[ind_point[3]] = 1
-        #print(cur_restriction2)
-        self.Restriction.append(cur_restriction2)
-        self.RestrictionRightVector.append(0)
-        cur_restriction3 = []
-        for i in range(len(self.pointsFlatten)):
-            cur_restriction3.append(0)
-        cur_restriction3[ind_point[2]] = 1  # уравнение для сохранения значений x1
-        self.Restriction.append(cur_restriction3)
-        self.RestrictionRightVector.append(self.pointsFlatten[ind_point[2]])
-        cur_restriction4 = []
-        for i in range(len(self.pointsFlatten)):
-            cur_restriction4.append(0)
-        cur_restriction4[ind_point[3]] = 1  # уравнение для сохранения значений y1
-        self.Restriction.append(cur_restriction4)
-        self.RestrictionRightVector.append(self.pointsFlatten[ind_point[3]])
-        #print(ind_point)
-        print("Restrictions: \n", np.array(self.Restriction))
-        print("Right vector of restriction", self.RestrictionRightVector)
+        list_of_la.append(globals()['la%s' % str(self.counter_la)])
+        self.function_with_restriction.append(sp.Mul(list_of_la[self.counter_la],
+                                                     list_of_sym_coord[ind_point[2]] - list_of_sym_coord[ind_point[0]]))
+        self.counter_la += 1
+        list_of_la.append(globals()['la%s' % str(self.counter_la)])  # Добавили новую лямбду в массив всех текущих лябмд
+        self.function_with_restriction.append(sp.Mul(list_of_la[self.counter_la],
+                                                     list_of_sym_coord[ind_point[3]] - list_of_sym_coord[ind_point[1]]))
+        self.counter_la += 1
+        list_of_la.append(globals()['la%s' % str(self.counter_la)])
+        self.function_with_restriction.append(sp.Mul(list_of_la[self.counter_la],
+                                                     list_of_sym_coord[ind_point[2]] - self.pointsFlatten[ind_point[2]]))
+        self.counter_la += 1
+        list_of_la.append(globals()['la%s' % str(self.counter_la)])
+        self.function_with_restriction.append(sp.Mul(list_of_la[self.counter_la],
+                                                     list_of_sym_coord[ind_point[3]] - self.pointsFlatten[ind_point[3]]))
+        self.counter_la += 1
+        self.function_with_restriction = sp.Add(*self.function_with_restriction)
+        self.Restriction = sp.Add(self.function_with_restriction, self.function_no_restriction)  # Сложили две части уравнений
+        print("Current function: ", self.Restriction)
+        list_of_sym = list_of_sym_coord + list_of_la
+        print("List of sym = ", list_of_sym)
+        list_diff = list(sp.diff(self.Restriction, x) for x in list_of_sym)  # Находим производные для функции
+        # по всем символьным переменным
+        print(list_diff)
+        print(sp.solve(list_diff, list_of_sym))  # Здесь решили уравнение и получили новое значение в виде словаря,
+        # надо откинуть лямбды
+
+        # Старый код
+        # #print("PointsFlatten: \n", self.pointsFlatten)
+        # cur_restriction1 = []
+        # for i in range(len(self.pointsFlatten)):
+        #     cur_restriction1.append(0)
+        # cur_restriction1[ind_point[0]] = -1
+        # cur_restriction1[ind_point[2]] = 1
+        # self.Restriction.append(cur_restriction1)
+        # self.RestrictionRightVector.append(0)
+        # cur_restriction2 = []
+        # for i in range(len(self.pointsFlatten)):
+        #     cur_restriction2.append(0)
+        # cur_restriction2[ind_point[1]] = -1
+        # cur_restriction2[ind_point[3]] = 1
+        # #print(cur_restriction2)
+        # self.Restriction.append(cur_restriction2)
+        # self.RestrictionRightVector.append(0)
+        # cur_restriction3 = []
+        # for i in range(len(self.pointsFlatten)):
+        #     cur_restriction3.append(0)
+        # cur_restriction3[ind_point[2]] = 1  # уравнение для сохранения значений x1
+        # self.Restriction.append(cur_restriction3)
+        # self.RestrictionRightVector.append(self.pointsFlatten[ind_point[2]])
+        # cur_restriction4 = []
+        # for i in range(len(self.pointsFlatten)):
+        #     cur_restriction4.append(0)
+        # cur_restriction4[ind_point[3]] = 1  # уравнение для сохранения значений y1
+        # self.Restriction.append(cur_restriction4)
+        # self.RestrictionRightVector.append(self.pointsFlatten[ind_point[3]])
+        # #print(ind_point)
+        # print("Restrictions: \n", np.array(self.Restriction))
+        # print("Right vector of restriction", self.RestrictionRightVector)
+
+
 
 
     def desactivate(self):
