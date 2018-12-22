@@ -446,6 +446,7 @@ class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.Points = []
+        self.oldPoints = []
         self.function_no_restriction = []
         self.function_with_restriction = []
         self.Restriction = []
@@ -575,6 +576,8 @@ class App(QMainWindow):
                 self.incr = -1
 
     def appendTwoPointsRestriction(self):  # Ограничение совпадение двух точек
+        for i in range(len(self.Points)):
+            self.oldPoints[i] = self.Points[i]
         ind_point = []
         for i in range(len(self.chsTwoPoint)):
             ind_point.append(self.pointsFlatten.index(self.chsTwoPoint[i]))
@@ -603,9 +606,23 @@ class App(QMainWindow):
         list_diff = list(sp.diff(self.Restriction, x) for x in list_of_sym)  # Находим производные для функции
         # по всем символьным переменным
         print(list_diff)
-        print(sp.solve(list_diff, list_of_sym))  # Здесь решили уравнение и получили новое значение в виде словаря,
+        cur_point = sp.solve(list_diff, list_of_sym)  # Здесь решили уравнение и получили новое значение в виде словаря,
+        print(cur_point)
         # надо откинуть лямбды
 
+        cur_point_without_lambda = []
+        i = 0
+        while i < len(list_of_sym_coord):
+            cur_two_coord = []
+            cur_two_coord.append(cur_point.get(list_of_sym[i]))
+            cur_two_coord.append(cur_point.get(list_of_sym[i+1]))
+            cur_point_without_lambda.append(cur_two_coord)
+            #print(cur_two_coord)
+            i += 2
+        #print(cur_point_without_lambda)
+        for i in range(len(cur_point_without_lambda)):
+            self.Points[i] = cur_point_without_lambda[i]
+        print("New points: ", self.Points)
         # Старый код
         # #print("PointsFlatten: \n", self.pointsFlatten)
         # cur_restriction1 = []
