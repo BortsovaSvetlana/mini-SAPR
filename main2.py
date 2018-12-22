@@ -11,13 +11,14 @@ from PyQt5.QtWidgets import *#QMainWindow, QFrame, QDesktopWidget, QApplication,
 from PyQt5.QtCore import *#Qt, QBasicTimer, pyqtSignal, QPoint
 from PyQt5.QtGui import *#QPainter, QColor, QPen, QPolygon
 
-x0, x1, x2, x3, x4, x5, x6, x7, y0, y1, y2, y3, y4, y5, y6, y7 = sp.symbols('x0 x1 x2 x3 x4 x5 x6 x7 y0 y1 y2 y3 y4 y5 y6 y7')
-la0, la1, la2, la3, la4, la5, la6, la7, la8 = sp.symbols('la0 la1 la2 la3 la4 la5 la6 la7 la8')
+x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, y0, y1, y2, y3, y4, y5, y6, y7, y8, y9 = sp.symbols('x0 x1 x2 x3 x4 x5 x6 x7 y0 y1 y2 y3 y4 y5 y6 y7')
+la0, la1, la2, la3, la4, la5, la6, la7, la8, la9, la10, la11 = sp.symbols('la0 la1 la2 la3 la4 la5 la6 la7 la8')
 name = "x"
 name_la = "la"
 list_of_sym_coord = []
 list_of_la = []
 # todo найти и посмотреть transform для окна
+# todo придумать что делать с совпадающими точками
 
 
 class GraphicsView(QGraphicsView) :
@@ -98,21 +99,36 @@ class GraphicScene(QGraphicsScene) :
                 print(X.y())
                 self.parent.repaintLine(len(self.parent.Points) - 1,len(self.parent.Points) - 2)
                 self.drawing = False
-                print("lines :")
-                print(len(self.parent.lines))# Вызов перерисовки виджета
-                print("scpoints :")
-                print(len(self.parent.scPoints))  #
-                #print("lines_idxs :")
-               # print(len(self.parent.lines_idxs))  # Вызов перерисовки виджета
-                #print("scpoints_idxs :")
-                #print(len(self.parent.scPoints_idxs))
-                print("points :")
-                print(len(self.parent.Points))
-                for i in range(len(self.parent.Restriction)):  #добавляем два раза в уравнения ограничений
-                    self.parent.Restriction[i].append(0)
-                    self.parent.Restriction[i].append(0)
-                    self.parent.Restriction[i].append(0)
-                    self.parent.Restriction[i].append(0)
+                #  Добавили в список из перечня символьных величин
+                list_of_sym_coord.append(globals()['x%s' % str(self.parent.glob_count)])
+                list_of_sym_coord.append(globals()['y%s' % str(self.parent.glob_count)])
+                self.parent.glob_count = self.parent.glob_count+1
+                list_of_sym_coord.append(globals()['x%s' % str(self.parent.glob_count)])
+                list_of_sym_coord.append(globals()['y%s' % str(self.parent.glob_count)])
+                self.parent.glob_count = self.parent.glob_count+1
+                print("Текущее состояние вектора символьных координат", list_of_sym_coord)
+                #  Теперь надо создать уравнение без ограничения
+                self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
+                self.parent.function_no_restriction = sp.Add(*list(map(lambda x, y: (0.5 * pow(x - y, 2)),
+                                                                       list_of_sym_coord, self.parent.pointsFlatten)))
+                print("Текушее состоянии фукнции без ограничений", self.parent.function_no_restriction)
+                #  Прибавляем глобальный счетчик для символьных значений
+
+               #  print("lines :")
+               #  print(len(self.parent.lines))# Вызов перерисовки виджета
+               #  print("scpoints :")
+               #  print(len(self.parent.scPoints))  #
+               #  #print("lines_idxs :")
+               # # print(len(self.parent.lines_idxs))  # Вызов перерисовки виджета
+               #  #print("scpoints_idxs :")
+               #  #print(len(self.parent.scPoints_idxs))
+               #  print("points :")
+               #  print(len(self.parent.Points))
+               #  for i in range(len(self.parent.Restriction)):  #добавляем два раза в уравнения ограничений
+               #      self.parent.Restriction[i].append(0)
+               #      self.parent.Restriction[i].append(0)
+               #      self.parent.Restriction[i].append(0)
+               #      self.parent.Restriction[i].append(0)
                 self.update()
 
             elif self.parent.option == "point" :# если кнопка point. создается новая точка
@@ -130,9 +146,9 @@ class GraphicScene(QGraphicsScene) :
                 #  Прибавляем глобальный счетчик для символьных значений
                 self.parent.glob_count = self.parent.glob_count+1
 
-                for cur in range(len(self.parent.Restriction)): #  добавляем два раза в уравнения ограничений
-                    self.parent.Restriction[cur].append(0)
-                    self.parent.Restriction[cur].append(0)
+                # for cur in range(len(self.parent.Restriction)): #  добавляем два раза в уравнения ограничений
+                #     self.parent.Restriction[cur].append(0)
+                #     self.parent.Restriction[cur].append(0)
                 self.parent.paintPoint(len(self.parent.Points) - 1)
                 self.update()
             elif (self.parent.option == "delete") :# если кнопка delete
@@ -295,21 +311,20 @@ class GraphicScene(QGraphicsScene) :
 
                 Tr = QTransform()
                 flag = False
-                for i in range(-5, 5):
-                    for j in range(-5, 5):
 
-                        item = self.parent.scene.itemAt(X.x() + i, X.y() + j, Tr)
 
-                        if (item != None):
-                            flag = True
+                self.parent.showDialogEnterPoint()  # задание х
+                x = self.parent.d
+                '''''
+                for i in range(len(self.pointsFlatten)):
+                    for j in range(len(self.pointsFlatten)):
+                        if self.Restriction[i][j] == 1 and j == incr*2 and self.RestrictionRightVector[j] != 0:  # Для х координаты, которая меняется
+                            self.RestrictionRightVector[j] = x
+                '''''
+                self.parent.showDialogEnterPoint()  # задание y
+                y = self.parent.d
 
-                        if (flag):
-                            break
-                    if (flag):
-                        break
-                print(item)
-
-                self.parent.repaintByPoint(item)
+                self.parent.repaintByPoint(X.x(), X.y(),x,y)
 
             elif self.parent.option == "twoPointRestriction":
                 coord = event.scenePos()
@@ -576,8 +591,8 @@ class App(QMainWindow):
                 self.incr = -1
 
     def appendTwoPointsRestriction(self):  # Ограничение совпадение двух точек
-        for i in range(len(self.Points)):
-            self.oldPoints[i] = self.Points[i]
+
+        self.oldPoints = self.Points.copy()
         ind_point = []
         for i in range(len(self.chsTwoPoint)):
             ind_point.append(self.pointsFlatten.index(self.chsTwoPoint[i]))
@@ -598,8 +613,8 @@ class App(QMainWindow):
         self.function_with_restriction.append(sp.Mul(list_of_la[self.counter_la],
                                                      list_of_sym_coord[ind_point[3]] - self.pointsFlatten[ind_point[3]]))
         self.counter_la += 1
-        self.function_with_restriction = sp.Add(*self.function_with_restriction)
-        self.Restriction = sp.Add(self.function_with_restriction, self.function_no_restriction)  # Сложили две части уравнений
+        #self.function_with_restriction = sp.Add(*self.function_with_restriction)
+        self.Restriction = sp.Add(sp.Add(*self.function_with_restriction), self.function_no_restriction)  # Сложили две части уравнений
         print("Current function: ", self.Restriction)
         list_of_sym = list_of_sym_coord + list_of_la
         print("List of sym = ", list_of_sym)
@@ -621,7 +636,8 @@ class App(QMainWindow):
             i += 2
         #print(cur_point_without_lambda)
         for i in range(len(cur_point_without_lambda)):
-            self.Points[i] = cur_point_without_lambda[i]
+            #self.Points[i] = cur_point_without_lambda[i]
+            self.repaintByPoint(self.Points[i][0],self.Points[i][1],cur_point_without_lambda[i][0],cur_point_without_lambda[i][1])
         print("New points: ", self.Points)
         # Старый код
         # #print("PointsFlatten: \n", self.pointsFlatten)
@@ -741,6 +757,85 @@ class App(QMainWindow):
             self.update()
 
 
+    def repaintByPoint(self,o_x, o_y, n_x, n_y):# меняет координаты точки с номером self.incr и перерисовывает соответствующий ей объект( динию или точку сцены)
+        Tr = QTransform()
+        item = self.scene.itemAt(o_x , o_y , Tr)
+        flag = False
+        if(item == None) :
+            for i in range(-5, 5):
+                for j in range(-5, 5):
+
+                    item = self.scene.itemAt(o_x + i, o_y + j, Tr)
+
+                    if (item != None):
+                        flag = True
+
+                    if (flag):
+                        break
+                if (flag):
+                    break
+
+        if self.lines.count(item) > 0:  # аналогично уладению и созданию. сначала удаляем, потом создаем новую
+            print("find item")
+            idx = self.lines.index(item)
+
+
+            line = item.line()
+
+            d1 = (line.x1() - o_x) * (line.x1() - o_x) + (line.y1() - o_y) * (line.y1() - o_y)
+            d2 = (line.x2() - o_x) * (line.x2() - o_x) + (line.y2() - o_y) * (line.y2() - o_y)
+
+
+
+            self.incr = -1
+
+            '''''
+            for i in range(len(self.pointsFlatten)):
+                for j in range(len(self.pointsFlatten)):
+                    if self.Restriction[i][j] == 1 and j == incr*2 + 1 and self.RestrictionRightVector[j] != 0:  # Для х координаты, которая меняется
+                        self.RestrictionRightVector[j] = y
+            '''''
+            print(n_x)
+            print(n_y)
+            print(self.Points)
+            self.scene.removeItem(item)
+            print(self.Points)
+            if (d1 < d2):
+                idx_p = self.Points.index([line.x1(), line.y1()])
+                self.Points[idx_p] = [n_x,n_y]
+                line.setP1(QPointF(n_x, n_y))
+
+            else:
+                idx_p = self.Points.index([line.x2(), line.y2()])
+                self.Points[idx_p] = [n_x, n_y]
+                line.setP2(QPointF(n_x, n_y))
+
+           # self.Points.insert([n_x, n_y], item)
+            print(self.Points)
+
+            qline = QGraphicsLineItem(line)
+            self.lines[idx] = qline
+            self.scene.addItem(qline)
+
+            self.update()
+
+        if (self.scPoints.count(item)):
+            print("find item")
+            idx = self.scPoints.index(item)
+            #   elem = self.parent.scPoints_idxs[idx]
+            x1, y1, x2, y2 = item.rect().getRect()
+
+
+            idx_p = self.Points.index([x1, y1])
+
+            self.scene.removeItem(item)
+
+
+            rect = QGraphicsRectItem(n_x, n_y, x2, y2)
+            self.scPoints[idx] = rect
+            self.Points[idx_p]=[n_x, n_y]
+            self.scene.addItem(rect)
+            self.update()
 
 
 
