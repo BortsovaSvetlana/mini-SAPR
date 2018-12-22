@@ -11,14 +11,14 @@ from PyQt5.QtWidgets import *#QMainWindow, QFrame, QDesktopWidget, QApplication,
 from PyQt5.QtCore import *#Qt, QBasicTimer, pyqtSignal, QPoint
 from PyQt5.QtGui import *#QPainter, QColor, QPen, QPolygon
 
-x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, y0, y1, y2, y3, y4, y5, y6, y7, y8, y9 = sp.symbols('x0 x1 x2 x3 x4 x5 x6 x7 y0 y1 y2 y3 y4 y5 y6 y7')
-la0, la1, la2, la3, la4, la5, la6, la7, la8, la9, la10, la11 = sp.symbols('la0 la1 la2 la3 la4 la5 la6 la7 la8')
+x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, y0, y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12, y13 = sp.symbols('x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13')
+la0, la1, la2, la3, la4, la5, la6, la7, la8, la9, la10, la11, la12, la13 = sp.symbols('la0 la1 la2 la3 la4 la5 la6 la7 la8 la9 la10 la11 la12 la13')
 name = "x"
 name_la = "la"
 list_of_sym_coord = []
 list_of_la = []
 # todo найти и посмотреть transform для окна
-# todo придумать что делать с совпадающими точками
+# todo придумать что делать с совпадающими точками в MouseRelease
 
 
 class GraphicsView(QGraphicsView) :
@@ -109,26 +109,10 @@ class GraphicScene(QGraphicsScene) :
                 print("Текущее состояние вектора символьных координат", list_of_sym_coord)
                 #  Теперь надо создать уравнение без ограничения
                 self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
-                self.parent.function_no_restriction = sp.Add(*list(map(lambda x, y: (0.5 * pow(x - y, 2)),
-                                                                       list_of_sym_coord, self.parent.pointsFlatten)))
+                self.parent.function_no_restriction = list(map(lambda x, y: (0.5 * pow(x - y, 2)),
+                                                                       list_of_sym_coord, self.parent.pointsFlatten))
                 print("Текушее состоянии фукнции без ограничений", self.parent.function_no_restriction)
                 #  Прибавляем глобальный счетчик для символьных значений
-
-               #  print("lines :")
-               #  print(len(self.parent.lines))# Вызов перерисовки виджета
-               #  print("scpoints :")
-               #  print(len(self.parent.scPoints))  #
-               #  #print("lines_idxs :")
-               # # print(len(self.parent.lines_idxs))  # Вызов перерисовки виджета
-               #  #print("scpoints_idxs :")
-               #  #print(len(self.parent.scPoints_idxs))
-               #  print("points :")
-               #  print(len(self.parent.Points))
-               #  for i in range(len(self.parent.Restriction)):  #добавляем два раза в уравнения ограничений
-               #      self.parent.Restriction[i].append(0)
-               #      self.parent.Restriction[i].append(0)
-               #      self.parent.Restriction[i].append(0)
-               #      self.parent.Restriction[i].append(0)
                 self.update()
 
             elif self.parent.option == "point" :# если кнопка point. создается новая точка
@@ -140,19 +124,15 @@ class GraphicScene(QGraphicsScene) :
                 print("Текущее состояние вектора символьных координат", list_of_sym_coord)
                 #  Теперь надо создать уравнение без ограничения
                 self.parent.pointsFlatten = datastructures.flatten(self.parent.Points)
-                self.parent.function_no_restriction = sp.Add(*list(map(lambda x, y: (0.5 * pow(x - y, 2)),
-                                                                       list_of_sym_coord, self.parent.pointsFlatten)))
+                self.parent.function_no_restriction = list(map(lambda x, y: (0.5 * pow(x - y, 2)),
+                                                                       list_of_sym_coord, self.parent.pointsFlatten))
                 print(self.parent.function_no_restriction)
                 #  Прибавляем глобальный счетчик для символьных значений
                 self.parent.glob_count = self.parent.glob_count+1
-
-                # for cur in range(len(self.parent.Restriction)): #  добавляем два раза в уравнения ограничений
-                #     self.parent.Restriction[cur].append(0)
-                #     self.parent.Restriction[cur].append(0)
                 self.parent.paintPoint(len(self.parent.Points) - 1)
                 self.update()
+                
             elif (self.parent.option == "delete") :# если кнопка delete
-                # Не удалять точки, которые были выбраны вторыми
                 X = event.scenePos()
 
                 Tr = QTransform()
@@ -176,71 +156,113 @@ class GraphicScene(QGraphicsScene) :
                    # elem = self.parent.lines_idxs[idx]
                    # self.parent.lines_idxs.remove(elem)
                     line = item.line()
-                    if len(self.parent.Restriction) > 0:
-                        for i in range(len(self.parent.pointsFlatten)):
-                            if line.x1() == self.parent.pointsFlatten[i]:
-                                ind_x1 = i
-                            elif line.y1() == self.parent.pointsFlatten[i]:
-                                ind_y1 = i
-                            elif line.x2() == self.parent.pointsFlatten[i]:
-                                ind_x2 = i
-                            elif line.y2() == self.parent.pointsFlatten[i]:
-                                ind_y2 = i
-                        i = 0
-                        while True:
-                            flag = 0
-                            for j in range(len(self.parent.Restriction[i])):
-                                if self.parent.Restriction[i][j] != 0 and j == ind_x1:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
+                    #if len(self.parent.Restriction) > 0:
+                    for i in range(len(self.parent.pointsFlatten)):
+                        if line.x1() == self.parent.pointsFlatten[i]:
+                            ind_x1 = i
+                        elif line.y1() == self.parent.pointsFlatten[i]:
+                            ind_y1 = i
+                        elif line.x2() == self.parent.pointsFlatten[i]:
+                            ind_x2 = i
+                        elif line.y2() == self.parent.pointsFlatten[i]:
+                            ind_y2 = i
+                    print("Before del:", self.parent.function_no_restriction)
+                    x1_sym = list_of_sym_coord[ind_x1]
+                    y1_sym = list_of_sym_coord[ind_y1]
+                    x2_sym = list_of_sym_coord[ind_x2]
+                    y2_sym = list_of_sym_coord[ind_y2]
+                    i = 0
+                    while True:
+                        fl = 0
+                        if y1_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            #print("After del:", self.parent.function_no_restriction)
+                            ind_x2 -= 1
+                            ind_y2 -= 1
+                            fl = 1
+                        elif x1_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            #print("After del:", self.parent.function_no_restriction)
+                            ind_y1 -= 1
+                            ind_x2 -= 1
+                            ind_y2 -= 1
+                            fl = 1
+                        elif x2_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            #print("After del:", self.parent.function_no_restriction)
+                            ind_y2 -= 1
+                            fl = 1
+                        elif y2_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            #print("After del:", self.parent.function_no_restriction)
+                            fl = 1
+                        i += 1
+                        if fl == 1:
+                            i = i - 1
+                        if i >= len(self.parent.function_no_restriction):
+                            break
+                    list_of_sym_coord.remove(y1_sym)
+                    list_of_sym_coord.remove(x1_sym)
+                    list_of_sym_coord.remove(y2_sym)
+                    list_of_sym_coord.remove(x2_sym)
+                    print(self.parent.function_no_restriction)
+                    print(list_of_sym_coord)
 
-                                elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
-                                elif self.parent.Restriction[i][j] != 0 and j == ind_x2:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
-                                elif self.parent.Restriction[i][j] != 0 and j == ind_y2:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
-                            if flag == 0:
-                                self.parent.Restriction[i].pop(ind_y2)
-                                self.parent.Restriction[i].pop(ind_x2)
-                                self.parent.Restriction[i].pop(ind_y1)
-                                self.parent.Restriction[i].pop(ind_x1)
-                            if flag == 0:
-                                i = i + 1
-                            if (i != len(self.parent.Restriction) and flag == 1):
-                                print("EDDD")
-                                if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    print("remove ", self.parent.Restriction[i+1], " and ",
-                                          self.parent.RestrictionRightVector[i+1])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                            print(self.parent.Restriction)
-                            print(self.parent.RestrictionRightVector)
-                            if i >= len(self.parent.Restriction):
-                                break
+                        #i = 0
+                        # while True:
+                        #     flag = 0
+                        #     for j in range(len(self.parent.Restriction[i])):
+                        #         if self.parent.Restriction[i][j] != 0 and j == ind_x1:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #
+                        #         elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #         elif self.parent.Restriction[i][j] != 0 and j == ind_x2:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #         elif self.parent.Restriction[i][j] != 0 and j == ind_y2:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #     if flag == 0:
+                        #         self.parent.Restriction[i].pop(ind_y2)
+                        #         self.parent.Restriction[i].pop(ind_x2)
+                        #         self.parent.Restriction[i].pop(ind_y1)
+                        #         self.parent.Restriction[i].pop(ind_x1)
+                        #     if flag == 0:
+                        #         i = i + 1
+                        #     if (i != len(self.parent.Restriction) and flag == 1):
+                        #         print("EDDD")
+                        #         if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             print("remove ", self.parent.Restriction[i+1], " and ",
+                        #                   self.parent.RestrictionRightVector[i+1])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #     print(self.parent.Restriction)
+                        #     print(self.parent.RestrictionRightVector)
+                        #     if i >= len(self.parent.Restriction):
+                        #         break
                     self.parent.Points.remove([line.x1(),line.y1()])  # удаляем точки из общего массива
                     self.parent.Points.remove([line.x2(), line.y2()])
                     self.parent.scene.removeItem(item)# удаляем со сцены
@@ -250,56 +272,105 @@ class GraphicScene(QGraphicsScene) :
                 elif self.parent.scPoints.count(item):#если точка
                     print("find item_point")
                     x1,y1,x2,y2 = item.rect().getRect()
-                    if len(self.parent.Restriction) > 0:
-                        for i in range(len(self.parent.pointsFlatten)):
-                            if x1 == self.parent.pointsFlatten[i]:
-                                ind_x1 = i
-                            elif y1 == self.parent.pointsFlatten[i]:
-                                ind_y1 = i
-                        i = 0; df = 0
-                        while True:
-                            flag = 0
-                            for j in range(len(self.parent.Restriction[i])):
-                                if self.parent.Restriction[i][j] != 0 and j == ind_x1:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
+                    #if len(self.parent.Restriction) > 0:
+                    for i in range(len(self.parent.pointsFlatten)):
+                        if x1 == self.parent.pointsFlatten[i]:
+                            ind_x1 = i
+                        elif y1 == self.parent.pointsFlatten[i]:
+                            ind_y1 = i
 
-                                elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
-                                    flag = 1
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    break
-                            if flag == 0:
-                                self.parent.Restriction[i].pop(ind_y1)
-                                self.parent.Restriction[i].pop(ind_x1)
-                            if flag == 0:
-                                i = i+1
-                            #print(self.parent.Restriction)
-                            #print(self.parent.RestrictionRightVector)
-                            if (i != len(self.parent.Restriction) and flag == 1):
-                                print("EDDD")
-                                if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
-                                    print("remove ", self.parent.Restriction[i], " and ",
-                                          self.parent.RestrictionRightVector[i])
-                                    print("remove ", self.parent.Restriction[i+1], " and ",
-                                          self.parent.RestrictionRightVector[i+1])
-                                    df = 1
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                    self.parent.Restriction.pop(i)
-                                    self.parent.RestrictionRightVector.pop(i)
-                                else:
-                                    df = 0
-                            if i >= len(self.parent.Restriction):
-                                break
-                        print(self.parent.Restriction)
-                        print(self.parent.RestrictionRightVector)
+                        #  Если в списке ограничений найден такой символ, то нужно определить в каком именно выражении
+                        #  и удалить выражение/я
+                    print("Find sym:", list_of_sym_coord[ind_y1], " in ",
+                          sp.Add(*self.parent.function_no_restriction).free_symbols)
+                    print("Before del:", self.parent.function_no_restriction)
+                    x1_sym = list_of_sym_coord[ind_x1]
+                    y1_sym = list_of_sym_coord[ind_y1]
+                    i = 0
+                    while True:
+                        fl = 0
+                        if y1_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            print("After del:", self.parent.function_no_restriction)
+                            fl = 1
+                        elif x1_sym in self.parent.function_no_restriction[i].free_symbols:
+                            self.parent.function_no_restriction.pop(i)
+                            print("After del:", self.parent.function_no_restriction)
+                            ind_y1 -= 1
+                            fl = 1
+                        i += 1
+                        if fl == 1:
+                            i = i - 1
+                        if i >= len(self.parent.function_no_restriction):
+                            break
+
+
+                    #  Следующий код подлежит доработке, так как предполагает, что на точку наложено ограничение.
+                    #  Вдобавок не продумано удаление лямбды. Скорее заметка
+                    #if lenlist_of_sym_coord
+                    if list_of_sym_coord[ind_x1] in sp.Add(*self.parent.function_with_restriction).free_symbols:
+                        #  Если в списке ограничений найден такой символ, то нужно определить в каком именно выражении
+                        #  и удалить выражение/я
+                        i = 0
+                        while i < len(sp.Add(*self.parent.function_with_restriction).args):
+                            fl = 0
+                            if list_of_sym_coord[ind_x1] in sp.Add(*self.parent.function_with_restriction).args[i].free_symbols:
+                                self.parent.function_with_restriction.pop(i)
+                                fl = 1
+                            i += 1
+                            if fl == 1:
+                                i = i-1
+                        list_of_sym_coord.remove(ind_x1)
+
+                        print(list_of_sym_coord)
+                    list_of_sym_coord.remove(y1_sym)
+                    list_of_sym_coord.remove(x1_sym)
+                    print(list_of_sym_coord)
+                        #  Старый код
+                        # i = 0; df = 0
+                        # while True:
+                        #     flag = 0
+                        #     for j in range(len(self.parent.Restriction[i])):
+                        #         if self.parent.Restriction[i][j] != 0 and j == ind_x1:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #
+                        #         elif self.parent.Restriction[i][j] != 0 and j == ind_y1:
+                        #             flag = 1
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             break
+                        #     if flag == 0:
+                        #         self.parent.Restriction[i].pop(ind_y1)
+                        #         self.parent.Restriction[i].pop(ind_x1)
+                        #     if flag == 0:
+                        #         i = i+1
+                        #     #print(self.parent.Restriction)
+                        #     #print(self.parent.RestrictionRightVector)
+                        #     if (i != len(self.parent.Restriction) and flag == 1):
+                        #         print("EDDD")
+                        #         if self.parent.Restriction[i].count(1) == 1 and self.parent.Restriction[i].count(0) == len(self.parent.Restriction[i])-1:
+                        #             print("remove ", self.parent.Restriction[i], " and ",
+                        #                   self.parent.RestrictionRightVector[i])
+                        #             print("remove ", self.parent.Restriction[i+1], " and ",
+                        #                   self.parent.RestrictionRightVector[i+1])
+                        #             df = 1
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #             self.parent.Restriction.pop(i)
+                        #             self.parent.RestrictionRightVector.pop(i)
+                        #         else:
+                        #             df = 0
+                        #     if i >= len(self.parent.Restriction):
+                        #         break
+                        # print(self.parent.Restriction)
+                        # print(self.parent.RestrictionRightVector)
                     self.parent.Points.remove([x1,y1])
                     self.parent.scene.removeItem(item)
                     self.parent.scPoints.remove(item)
@@ -614,14 +685,16 @@ class App(QMainWindow):
                                                      list_of_sym_coord[ind_point[3]] - self.pointsFlatten[ind_point[3]]))
         self.counter_la += 1
         #self.function_with_restriction = sp.Add(*self.function_with_restriction)
-        self.Restriction = sp.Add(sp.Add(*self.function_with_restriction), self.function_no_restriction)  # Сложили две части уравнений
+        #print("hh", self.function_with_restriction)
+        #print("jjj", self.function_no_restriction)
+        self.Restriction = sp.Add(sp.Add(*self.function_with_restriction), sp.Add(*self.function_no_restriction))  # Сложили две части уравнений
         print("Current function: ", self.Restriction)
         list_of_sym = list_of_sym_coord + list_of_la
         print("List of sym = ", list_of_sym)
         list_diff = list(sp.diff(self.Restriction, x) for x in list_of_sym)  # Находим производные для функции
         # по всем символьным переменным
         print(list_diff)
-        cur_point = sp.solve(list_diff, list_of_sym)  # Здесь решили уравнение и получили новое значение в виде словаря,
+        cur_point = sp.solve(list_diff, list(list_of_sym))  # Здесь решили уравнение и получили новое значение в виде словаря,
         print(cur_point)
         # надо откинуть лямбды
 
@@ -632,9 +705,7 @@ class App(QMainWindow):
             cur_two_coord.append(cur_point.get(list_of_sym[i]))
             cur_two_coord.append(cur_point.get(list_of_sym[i+1]))
             cur_point_without_lambda.append(cur_two_coord)
-            #print(cur_two_coord)
             i += 2
-        #print(cur_point_without_lambda)
         for i in range(len(cur_point_without_lambda)):
             #self.Points[i] = cur_point_without_lambda[i]
             self.repaintByPoint(self.Points[i][0],self.Points[i][1],cur_point_without_lambda[i][0],cur_point_without_lambda[i][1])
